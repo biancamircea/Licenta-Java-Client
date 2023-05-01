@@ -11,6 +11,5 @@ public class ToggleSystemException extends RuntimeException{
     public ToggleSystemException(String message, @Nullable Throwable cause) {
         super(message, cause);
         LOG.warn(message);
-//        System.out.println(message);
     }
 }

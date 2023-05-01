@@ -132,8 +132,8 @@ public class ToggleSystemConfig {
         private URI toggleServerAPI;
         private String apiKey;
         private @Nullable String appName;
-        private final String environment = "default";
-        private final String instanceId = getDefaultInstanceId();
+        private String environment = "default";
+        private String instanceId = getDefaultInstanceId();
         private int pollingInterval = 60; // Default polling interval in seconds
         private @Nullable String backupFilePath; // Default backup file path
         private boolean localEvaluation = false;
@@ -184,6 +184,18 @@ public class ToggleSystemConfig {
             this.toggleSystemContextProvider = toggleSystemContextProvider;
             return this;
         }
+
+        public Builder environment(String environment){
+            this.environment = environment;
+            return this;
+        }
+
+        public Builder instanceId(String instanceId){
+            this.instanceId = instanceId;
+            return this;
+        }
+
+
 
 //      AUXILIARY METHODS
         private static String getHostname() {
