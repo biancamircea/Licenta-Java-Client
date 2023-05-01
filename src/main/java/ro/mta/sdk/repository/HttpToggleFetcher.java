@@ -62,12 +62,13 @@ public class HttpToggleFetcher implements ToggleFetcher{
         }  else if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
             return new ToggleResponse(
                     ToggleResponse.Status.NOT_CHANGED, responseCode);
-        } else {
-            return new ToggleResponse(
-                    ToggleResponse.Status.UNAVAILABLE,
-                    responseCode,
-                    getLocationHeader(request));
+        } else if(responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            LOG.warn("Api Token not valid.");
         }
+        return new ToggleResponse(
+                ToggleResponse.Status.UNAVAILABLE,
+                responseCode,
+                getLocationHeader(request));
     }
 
 

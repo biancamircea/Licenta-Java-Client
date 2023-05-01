@@ -10,29 +10,43 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class FeatureToggleRepository implements ToggleRepository{
-
+    private final BackupHandler<ToggleCollection> toggleBackupHandler;
     private final ToggleFetcher toggleFetcher;
     private ToggleCollection toggleCollection;
     private boolean ready;
-
     public FeatureToggleRepository(ToggleSystemConfig systemConfig){
-        this(systemConfig, new HttpToggleFetcher(systemConfig));
+        this(systemConfig,
+                new ToggleBackupHandler(systemConfig));
+    }
+
+    public FeatureToggleRepository(ToggleSystemConfig systemConfig,
+                                   BackupHandler<ToggleCollection> toggleBackupHandler){
+        this(systemConfig,
+                new HttpToggleFetcher(systemConfig),
+                toggleBackupHandler);
     }
 
     public FeatureToggleRepository(
             ToggleSystemConfig systemConfig,
-            ToggleFetcher toggleFetcher) {
+            ToggleFetcher toggleFetcher,
+            BackupHandler<ToggleCollection> toggleBackupHandler) {
         this(
                 systemConfig,
                 systemConfig.getToggleSystemExecutor(),
-                toggleFetcher);
+                toggleFetcher,
+                toggleBackupHandler);
     }
 
     public FeatureToggleRepository(
             ToggleSystemConfig systemConfig,
             ToggleSystemExecutor executor,
-            ToggleFetcher toggleFetcher) {
+            ToggleFetcher toggleFetcher,
+            BackupHandler<ToggleCollection> toggleBackupHandler) {
+
         this.toggleFetcher = toggleFetcher;
+        this.toggleBackupHandler = toggleBackupHandler;
+
+        this.toggleCollection = toggleBackupHandler.read();
         if (systemConfig.isSynchronousFetchOnInitialisation()) {
             updateToggles().run();
         }
@@ -47,7 +61,7 @@ public class FeatureToggleRepository implements ToggleRepository{
                 ToggleResponse response = toggleFetcher.fetchToggles();
                 if (response.getStatus() == ToggleResponse.Status.CHANGED) {
                     toggleCollection = response.getToggleCollection();
-//                    toggleBackupHandler.write(response.getToggleCollection());
+                    toggleBackupHandler.write(response.getToggleCollection());
                 }
                 if (!ready) {
                     ready = true;

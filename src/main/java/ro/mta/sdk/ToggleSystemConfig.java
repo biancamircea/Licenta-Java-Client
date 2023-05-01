@@ -217,7 +217,7 @@ public class ToggleSystemConfig {
             if (backupFilePath != null) {
                 return backupFilePath;
             } else {
-                String fileName = "unleash-" + sanitizedAppName(appName) + "-repo.json";
+                String fileName = "toggle-system-" + sanitizedAppName(appName) + "-repo.json";
                 String tmpDir = System.getProperty("java.io.tmpdir");
                 if (tmpDir == null) {
                     throw new IllegalStateException(

@@ -9,13 +9,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ToggleCollection {
-    private final Collection<FeatureToggle> featureToggles;
+    private final Collection<FeatureToggle> features;
     private final transient Map<String, FeatureToggle> cache;
 
     public ToggleCollection(Collection<FeatureToggle> featureToggles) {
-        this.featureToggles = ensureNotNull(featureToggles);
+        this.features = ensureNotNull(featureToggles);
         this.cache = new ConcurrentHashMap<>();
-        for (FeatureToggle featureToggle : this.featureToggles) {
+        for (FeatureToggle featureToggle : this.features) {
             cache.put(featureToggle.getName(), featureToggle);
         }
     }
@@ -28,7 +28,7 @@ public class ToggleCollection {
     }
 
     public Collection<FeatureToggle> getFeatureToggles() {
-        return featureToggles;
+        return features;
     }
     public FeatureToggle getToggle(String name) {
         return cache.get(name);
