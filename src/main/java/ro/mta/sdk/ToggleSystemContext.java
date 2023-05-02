@@ -1,10 +1,10 @@
 package ro.mta.sdk;
 
+import ro.mta.sdk.evaluator.ContextField;
+
 import javax.annotation.Nullable;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class ToggleSystemContext {
     private final Optional<String> appName;
@@ -57,6 +57,43 @@ public class ToggleSystemContext {
             case "remoteAddress" -> remoteAddress;
             default -> Optional.ofNullable(properties.get(contextName));
         };
+    }
+
+    public List<ContextField> getAllContextFields(){
+        List<ContextField> contextFields = new ArrayList<>();
+
+        if(getAppName().isPresent()){
+            contextFields.add(new ContextField("appName", getAppName().get()));
+        }
+        if(getEnvironment().isPresent()){
+            contextFields.add(new ContextField("environment", getEnvironment().get()));
+        }
+        if(getUserId().isPresent()){
+            contextFields.add(new ContextField("userId", getUserId().get()));
+        }
+        if(getRemoteAddress().isPresent()){
+            contextFields.add(new ContextField("remoteAddress", getRemoteAddress().get()));
+        }
+        if(getCurrentTime().isPresent()){
+            contextFields.add(new ContextField("currentTime", getCurrentTime().get().toString()));
+        }
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            contextFields.add(new ContextField(entry.getKey(), entry.getValue()));
+        }
+        return contextFields;
+    }
+
+    public String getAllContextFieldsToString(){
+        List<ContextField> contextFields = getAllContextFields();
+        StringBuilder sb = new StringBuilder();
+        String delimiter = "#";
+        for (ContextField field : contextFields) {
+            sb.append(field.getName())
+                    .append("=")
+                    .append(field.getValue())
+                    .append(delimiter);
+        }
+        return sb.toString();
     }
 
     public ToggleSystemContext applyStaticFields(ToggleSystemConfig config) {

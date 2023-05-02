@@ -21,9 +21,10 @@ public class ToggleSystemConfig {
     private final String appName;
     private final String environment;
     private final String instanceId;
-    private int pollingInterval = 60; // Default polling interval in seconds
-    private String backupFilePath; // Default backup file path
-    private final boolean localEvaluation;
+    private final int pollingInterval; // Default polling interval in seconds
+    private final long cacheTimeout;
+    private String backupFilePath;
+    private final boolean remoteEvaluation;
     private final boolean synchronousFetchOnInitialisation;
     private final ToggleSystemContextProvider toggleSystemContextProvider;
     private final ToggleSystemExecutor toggleSystemExecutor;
@@ -34,9 +35,10 @@ public class ToggleSystemConfig {
             String appName,
             String environment,
             String instanceId,
-            boolean localEvaluation,
+            boolean remoteEvaluation,
             boolean synchronousFetchOnInitialisation,
             int pollingInterval,
+            long cacheTimeout,
             String backupFilePath,
             ToggleSystemContextProvider toggleSystemContextProvider,
             ToggleSystemExecutor toggleSystemExecutor
@@ -60,9 +62,10 @@ public class ToggleSystemConfig {
         this.appName = appName;
         this.environment = environment;
         this.instanceId = instanceId;
-        this.localEvaluation = localEvaluation;
+        this.remoteEvaluation = remoteEvaluation;
         this.synchronousFetchOnInitialisation = synchronousFetchOnInitialisation;
         this.pollingInterval = pollingInterval;
+        this.cacheTimeout = cacheTimeout;
         this.backupFilePath = backupFilePath;
         this.toggleSystemContextProvider = toggleSystemContextProvider;
         this.toggleSystemExecutor = toggleSystemExecutor;
@@ -93,6 +96,10 @@ public class ToggleSystemConfig {
         return pollingInterval;
     }
 
+    public long getCacheTimeout() {
+        return cacheTimeout;
+    }
+
     public String getBackupFilePath() {
         return backupFilePath;
     }
@@ -109,8 +116,8 @@ public class ToggleSystemConfig {
         return toggleSystemURL;
     }
 
-    public boolean isLocalEvaluation() {
-        return localEvaluation;
+    public boolean isRemoteEvaluation() {
+        return remoteEvaluation;
     }
 
     public boolean isSynchronousFetchOnInitialisation() {
@@ -135,8 +142,9 @@ public class ToggleSystemConfig {
         private String environment = "default";
         private String instanceId = getDefaultInstanceId();
         private int pollingInterval = 60; // Default polling interval in seconds
+        private @Nullable long cacheTimeout = 60;
         private @Nullable String backupFilePath; // Default backup file path
-        private boolean localEvaluation = false;
+        private boolean remoteEvaluation = false;
         private boolean synchronousFetchOnInitialisation = false;
         private ToggleSystemContextProvider toggleSystemContextProvider = ToggleSystemContextProvider.getDefaultProvider();
         private ToggleSystemExecutor toggleSystemExecutor;
@@ -161,8 +169,8 @@ public class ToggleSystemConfig {
             return this;
         }
 
-        public Builder localEvaluation(boolean localEvaluation) {
-            this.localEvaluation = localEvaluation;
+        public Builder remoteEvaluation(boolean remoteEvaluation) {
+            this.remoteEvaluation = remoteEvaluation;
             return this;
         }
         public Builder synchronousFetchOnInitialisation(boolean enable) {
@@ -172,6 +180,11 @@ public class ToggleSystemConfig {
 
         public Builder pollingInterval(int pollingInterval) {
             this.pollingInterval = pollingInterval;
+            return this;
+        }
+
+        public Builder cacheTimeout(long cacheTimeout) {
+            this.cacheTimeout = cacheTimeout;
             return this;
         }
 
@@ -246,9 +259,10 @@ public class ToggleSystemConfig {
                     appName,
                     environment,
                     instanceId,
-                    localEvaluation,
+                    remoteEvaluation,
                     synchronousFetchOnInitialisation,
                     pollingInterval,
+                    cacheTimeout,
                     getBackupFile(),
                     toggleSystemContextProvider,
                     ToggleSystemExecutorImpl.getInstance()
