@@ -17,7 +17,6 @@ public class HttpToggleFetcher implements ToggleFetcher{
     private static final Logger LOG = LoggerFactory.getLogger(HttpToggleFetcher.class);
     private static final int CONNECT_TIMEOUT = 10000;
     private final ToggleSystemConfig config;
-
     private final URL toggleUrl;
 
     public HttpToggleFetcher(ToggleSystemConfig config) {
