@@ -138,7 +138,7 @@ public class ToggleSystemConfig {
     public static class Builder {
         private URI toggleServerAPI;
         private String apiKey;
-        private @Nullable String appName;
+        private @Nullable String appName = "default";
         private String environment = "default";
         private String instanceId = getDefaultInstanceId();
         private int pollingInterval = 60; // Default polling interval in seconds
