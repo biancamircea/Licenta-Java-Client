@@ -154,7 +154,7 @@ public class ToggleSystemConfig {
             this.toggleServerAPI = toggleServerAPI;
             return this;
         }
-        Builder toggleServerAPI(String toggleServerAPI) {
+        public Builder toggleServerAPI(String toggleServerAPI) {
             this.toggleServerAPI = URI.create(toggleServerAPI);
             return this;
         }

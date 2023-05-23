@@ -4,9 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.example</groupId>
-    <artifactId>ToggleSystem</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <groupId>ro.mta.sdk</groupId>
+    <artifactId>toggle-system</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
 
     <properties>
         <version.slf4j>2.0.6</version.slf4j>
@@ -42,4 +43,11 @@
         </dependency>
     </dependencies>
 
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub vred29 Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/vred29/Licenta-Java-Client</url>
+        </repository>
+    </distributionManagement>
 </project>
