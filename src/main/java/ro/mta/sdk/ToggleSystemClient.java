@@ -11,6 +11,7 @@ import ro.mta.sdk.repository.ToggleRepository;
 import ro.mta.sdk.util.ConstraintUtil;
 
 public class ToggleSystemClient {
+    private static final Logger LOG = LoggerFactory.getLogger(ToggleSystemClient.class);
     private final ToggleSystemConfig toggleSystemConfig;
     private final ToggleSystemContextProvider toggleSystemContextProvider;
     private final ToggleRepository toggleRepository;
@@ -63,14 +64,15 @@ public class ToggleSystemClient {
     }
 
     public boolean isEnabled(String toggleName){
-        return isEnabled(toggleName, false);
+        return isEnabled(toggleName, toggleSystemContextProvider.getContext());
     }
-
+    public boolean isEnabled(String toggleName, ToggleSystemContext context){
+        return isEnabled(toggleName, context, false);
+    }
     public boolean isEnabled(String toggleName, boolean defaultSetting){
         return isEnabled(toggleName, toggleSystemContextProvider.getContext(), defaultSetting);
     }
-
-    public boolean isEnabled(String toggleName,ToggleSystemContext context , boolean defaultSetting){
+    public boolean isEnabled(String toggleName, ToggleSystemContext context, boolean defaultSetting){
         if(toggleSystemConfig.isRemoteEvaluation()){
             return checkRemote(toggleName, context, defaultSetting);
         } else {
@@ -98,5 +100,45 @@ public class ToggleSystemClient {
             enabled = ConstraintUtil.validate(featureToggle.getConstraintsList(),enhancedContext);
         }
         return enabled;
+    }
+
+    public String getPayload(String toggleName){
+        return getPayload(toggleName, toggleSystemContextProvider.getContext());
+    }
+    public String getPayload(String toggleName, ToggleSystemContext context){
+        return getPayload(toggleName, context, "default");
+    }
+    public String getPayload(String toggleName, String defaultPayload){
+        return getPayload(toggleName, toggleSystemContextProvider.getContext(), defaultPayload);
+    }
+    public String getPayload(String toggleName, ToggleSystemContext context, String defaultPayload){
+        if(toggleSystemConfig.isRemoteEvaluation()){
+            return getPayloadFromRemote(toggleName, context, defaultPayload);
+        } else {
+            return getPayloadFromRepo(toggleName, context, defaultPayload);
+        }
+    }
+
+    public String getPayloadFromRepo(String toggleName, ToggleSystemContext context, String defaultPayload){
+        boolean enabled = checkRepo(toggleName, context, false);
+        FeatureToggle featureToggle = toggleRepository.getToggle(toggleName);
+        if(featureToggle == null){
+            return defaultPayload;
+        } else {
+            if(featureToggle.getDisabledValue() == null || featureToggle.getEnabledValue() == null){
+                return defaultPayload;
+            }
+            if(enabled){
+                return featureToggle.getEnabledValue();
+            } else {
+                return featureToggle.getDisabledValue();
+            }
+        }
+    }
+
+    public String getPayloadFromRemote(String toggleName, ToggleSystemContext context, String defaultPayload){
+        ToggleSystemContext enhancedContext = context.applyStaticFields(toggleSystemConfig);
+        boolean enabled = evaluatorService.remoteEvalution(toggleName, enhancedContext, false);
+        return evaluatorService.remotePayload(toggleName, enabled, enhancedContext, defaultPayload);
     }
 }

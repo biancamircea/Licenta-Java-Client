@@ -36,7 +36,6 @@ public class HttpMetricSender implements MetricSender{
     public void registerClient(ClientRegistration registration) {
         try {
             int response = post(clientRegistrationURL, registration);
-            System.out.println(response);
         } catch (ToggleSystemException ex) {
         }
     }

@@ -7,6 +7,10 @@ import java.util.List;
 public class FeatureToggle {
     private final String name;
     private final boolean enabled;
+    @Nullable
+    private String enabledValue;
+    @Nullable
+    private String disabledValue;
 
     private final List<Constraint> constraintsList;
 
@@ -26,6 +30,16 @@ public class FeatureToggle {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    @Nullable
+    public String getEnabledValue() {
+        return enabledValue;
+    }
+
+    @Nullable
+    public String getDisabledValue() {
+        return disabledValue;
     }
 
     public List<Constraint> getConstraintsList() {
