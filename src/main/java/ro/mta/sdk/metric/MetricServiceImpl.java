@@ -19,7 +19,7 @@ public class MetricServiceImpl implements MetricService{
     public MetricServiceImpl(
             ToggleSystemConfig systemConfig,
             MetricSender metricSender) {
-        this.started = LocalDateTime.now(ZoneId.of("UTC"));
+        this.started = LocalDateTime.now();
         this.toggleSystemConfig = systemConfig;
         this.metricSender = metricSender;
     }
