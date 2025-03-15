@@ -6,7 +6,7 @@
 
     <groupId>ro.mta.sdk</groupId>
     <artifactId>toggle-system</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.3</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -46,8 +46,9 @@
     <distributionManagement>
         <repository>
             <id>github</id>
-            <name>GitHub vred29 Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/vred29/Licenta-Java-Client</url>
+            <name>GitHub biancamircea Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/biancamircea/Licenta-Java-Client</url>
         </repository>
     </distributionManagement>
+
 </project>

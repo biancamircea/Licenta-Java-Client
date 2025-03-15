@@ -25,6 +25,7 @@ public class HttpEvaluatorSender implements EvaluatorSender{
     private final Gson gson;
     private ToggleSystemConfig toggleSystemConfig;
     private final URL clientEvaluationURL;
+
     public HttpEvaluatorSender(ToggleSystemConfig systemConfig){
         this.toggleSystemConfig = systemConfig;
         ToggleSystemURL urls = systemConfig.getToggleSystemURL();

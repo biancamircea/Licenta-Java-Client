@@ -81,8 +81,8 @@ public class ToggleSystemClient {
     }
 
     private boolean checkRemote(String toggleName, ToggleSystemContext context, boolean defaultSetting){
-        ToggleSystemContext enhancedContext = context.applyStaticFields(toggleSystemConfig);
-        return evaluatorService.remoteEvalution(toggleName, enhancedContext, defaultSetting);
+        //ToggleSystemContext enhancedContext = context.applyStaticFields(toggleSystemConfig);
+        return evaluatorService.remoteEvalution(toggleName, context, defaultSetting);
     }
 
     private boolean checkRepo(String toggleName, ToggleSystemContext context, boolean defaultSetting){
@@ -137,8 +137,8 @@ public class ToggleSystemClient {
     }
 
     public String getPayloadFromRemote(String toggleName, ToggleSystemContext context, String defaultPayload){
-        ToggleSystemContext enhancedContext = context.applyStaticFields(toggleSystemConfig);
-        boolean enabled = evaluatorService.remoteEvalution(toggleName, enhancedContext, false);
-        return evaluatorService.remotePayload(toggleName, enabled, enhancedContext, defaultPayload);
+        //ToggleSystemContext enhancedContext = context.applyStaticFields(toggleSystemConfig);
+        boolean enabled = evaluatorService.remoteEvalution(toggleName,context, false);
+        return evaluatorService.remotePayload(toggleName, enabled, context, defaultPayload);
     }
 }

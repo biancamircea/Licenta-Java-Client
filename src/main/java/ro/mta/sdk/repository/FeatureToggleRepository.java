@@ -14,6 +14,7 @@ public class FeatureToggleRepository implements ToggleRepository{
     private final ToggleFetcher toggleFetcher;
     private ToggleCollection toggleCollection;
     private boolean ready;
+
     public FeatureToggleRepository(ToggleSystemConfig systemConfig){
         this(systemConfig,
                 new ToggleBackupHandler(systemConfig));
