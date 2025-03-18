@@ -85,6 +85,10 @@ public class ToggleSystemClient {
         return evaluatorService.remoteEvalution(toggleName, context, defaultSetting);
     }
 
+    public boolean isEnabledZKP(String toggleName, ToggleSystemContext context){
+        return evaluatorService.remoteEvalutionWithZKP(toggleName, context);
+    }
+
     private boolean checkRepo(String toggleName, ToggleSystemContext context, boolean defaultSetting){
         boolean enabled = defaultSetting;
         FeatureToggle featureToggle = toggleRepository.getToggle(toggleName);

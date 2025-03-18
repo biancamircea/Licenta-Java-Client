@@ -2,10 +2,16 @@ package ro.mta.sdk.evaluator;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import ro.mta.sdk.ToggleSystemConfig;
-import ro.mta.sdk.ToggleSystemContext;
+import ro.mta.sdk.*;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class EvaluatorServiceImpl implements EvaluatorService {
     private final ToggleSystemConfig toggleSystemConfig;
@@ -57,6 +63,34 @@ public class EvaluatorServiceImpl implements EvaluatorService {
             return featureEvaluationResponse.getEnabled();
         } else {
             return defaultSetting;
+        }
+    }
+
+    @Override
+    public boolean remoteEvalutionWithZKP(String toggleName, ToggleSystemContext systemContext) {
+        ConstraintResponse response = evaluatorSender.fetchConstraints(toggleSystemConfig.getApiKey(), toggleName);
+        if (response != null) {
+            System.out.println("Received constraints: " + response.getConstraints());
+        }
+
+        Long age =Long.parseLong(systemContext.getPropertyByName("age").orElseThrow());
+        Long threshold = Long.parseLong(response.getValuesForContext("age").get(0));
+
+        try {
+            ZKPGenerator zkpGenerator = new ZKPGenerator();
+            String proofJson = zkpGenerator.generateProof(age.intValue(), threshold.intValue());
+
+            System.out.println("Generated Proof: " + proofJson);
+
+            //de trimis la server
+
+            //de primit on/off de la server
+
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 

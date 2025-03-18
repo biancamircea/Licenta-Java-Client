@@ -15,6 +15,8 @@ public class BasicConstraintOperator implements ConstraintOperator{
         return switch (constraint.getOperator()) {
             case IN -> isIn(values, contextValue);
             case NOT_IN -> !isIn(values, contextValue);
+            case GREATER_THAN -> isGreaterThan(values, contextValue);
+            case LESS_THAN -> isLessThan(values, contextValue);
             default -> false;
         };
     }
@@ -24,5 +26,31 @@ public class BasicConstraintOperator implements ConstraintOperator{
             values.stream()
                 .anyMatch(v2 -> v2.equals(v)))
             .orElse(false);
+    }
+
+    private boolean isGreaterThan(List<String> values, Optional<String> value) {
+        return value.filter(v -> !Double.isNaN(tryParseDouble(v)))
+                .map(v -> values.stream()
+                        .map(this::tryParseDouble)
+                        .filter(d -> !Double.isNaN(d))
+                        .anyMatch(d -> d < tryParseDouble(v)))
+                .orElse(false);
+    }
+
+    private boolean isLessThan(List<String> values, Optional<String> value) {
+        return value.filter(v -> !Double.isNaN(tryParseDouble(v)))
+                .map(v -> values.stream()
+                        .map(this::tryParseDouble)
+                        .filter(d -> !Double.isNaN(d))
+                        .anyMatch(d -> d > tryParseDouble(v)))
+                .orElse(false);
+    }
+
+    private double tryParseDouble(String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return Double.NaN;
+        }
     }
 }
