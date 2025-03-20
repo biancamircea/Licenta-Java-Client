@@ -17,23 +17,5 @@ public class Main {
 
         boolean isEnabled = systemClient.isEnabledZKP("togge1",context);
         System.out.println(isEnabled);
-
-//        ToggleSystemContextProvider toggleSystemContextProvider = ToggleSystemContextProvider.getDefaultProvider();
-//        ToggleSystemContext toggleSystemContext = toggleSystemConfig.getToggleSystemContextProvider().getContext();
-//
-//        ToggleSystemContext context = ToggleSystemContext.builder()
-//                .userId("user@mail.com").build();
-//
-//        ToggleSystemClient systemClient = new ToggleSystemClient(toggleSystemConfig);
-//
-//        while (true){
-//            if(systemClient.isEnabled("feat1")) {
-//                System.out.println("DA");
-//            } else {
-//                System.out.println("NU");
-//            }
-//
-//        }
-//        Long a = 3L;
     }
 }

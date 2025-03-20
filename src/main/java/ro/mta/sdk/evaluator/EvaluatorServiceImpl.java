@@ -73,20 +73,18 @@ public class EvaluatorServiceImpl implements EvaluatorService {
             System.out.println("Received constraints: " + response.getConstraints());
         }
 
-        Long age =Long.parseLong(systemContext.getPropertyByName("age").orElseThrow());
-        Long threshold = Long.parseLong(response.getValuesForContext("age").get(0));
+        Integer age =Integer.parseInt(systemContext.getPropertyByName("age").orElseThrow());
+        System.out.println("Age: " + age);
+        Integer threshold = Integer.parseInt(response.getValuesForContext("age").get(0));
+        System.out.println("Threshold: " + threshold);
 
         try {
             ZKPGenerator zkpGenerator = new ZKPGenerator();
-            String proofJson = zkpGenerator.generateProof(age.intValue(), threshold.intValue());
+            String proofJson = zkpGenerator.generateProof(age, threshold);
 
             System.out.println("Generated Proof: " + proofJson);
 
-            //de trimis la server
-
-            //de primit on/off de la server
-
-            return true;
+            return evaluatorSender.sendZKPVerificationRequest(toggleName, toggleSystemConfig.getApiKey(), proofJson);
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -2,6 +2,7 @@ package ro.mta.sdk.evaluator;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class HttpEvaluatorSender implements EvaluatorSender{
@@ -31,6 +34,7 @@ public class HttpEvaluatorSender implements EvaluatorSender{
     private ToggleSystemConfig toggleSystemConfig;
     private final URL clientEvaluationURL;
     private final URL constraintsURL;
+    private final URL clientEvaluationZKP;
 
     public HttpEvaluatorSender(ToggleSystemConfig systemConfig){
         this.toggleSystemConfig = systemConfig;
@@ -38,6 +42,7 @@ public class HttpEvaluatorSender implements EvaluatorSender{
         this.clientEvaluationURL = urls.getEvaluateToggleURL();
         this.gson = new GsonBuilder().create();
         this.constraintsURL = urls.getConstraintsURL();
+        this.clientEvaluationZKP = urls.getEvaluateToggleZKPURL();
     }
 
 
@@ -126,10 +131,8 @@ public class HttpEvaluatorSender implements EvaluatorSender{
         int responseCode = request.getResponseCode();
         if (responseCode < 300) {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream(), StandardCharsets.UTF_8))) {
-                // Deserializare directă într-o listă de obiecte ConstraintDTO
                 List<ConstraintDTO> constraints = gson.fromJson(reader, new TypeToken<List<ConstraintDTO>>(){}.getType());
 
-                // Creare și setare răspunsul
                 ConstraintResponse response = new ConstraintResponse();
                 response.setConstraints(constraints);
                 return response;
@@ -142,11 +145,53 @@ public class HttpEvaluatorSender implements EvaluatorSender{
         return new ConstraintResponse();
     }
 
+    @Override
+    public boolean sendZKPVerificationRequest(String toggleName, String apiToken, String proofJson) {
+        HttpURLConnection connection = null;
+        try {
+            connection = openConnection(this.clientEvaluationZKP);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Authorization", "Bearer " + apiToken);
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Accept", "application/json");
+            connection.setDoOutput(true);
 
+            JsonObject proofObject = gson.fromJson(proofJson, JsonObject.class);
 
-    private String readErrorStream(HttpURLConnection connection) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getErrorStream(), StandardCharsets.UTF_8))) {
-            return reader.lines().collect(Collectors.joining("\n"));
+            JsonObject requestBody = new JsonObject();
+            requestBody.addProperty("toggleName", toggleName);
+            requestBody.add("proof", proofObject);
+
+            System.out.println("Request body: "+requestBody);
+
+            try (OutputStream os = connection.getOutputStream()) {
+                os.write(gson.toJson(requestBody).getBytes(StandardCharsets.UTF_8));
+            }
+
+            return processZKPResponse(connection);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    private boolean processZKPResponse(HttpURLConnection connection) throws IOException {
+        int responseCode = connection.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+                FeatureEvaluationResponse response = gson.fromJson(reader, FeatureEvaluationResponse.class);
+                return response.getEnabled();
+            }catch (Exception e){
+                e.printStackTrace();
+                return false;
+            }
+        } else {
+            System.err.println("Server returned response code: " + responseCode);
+            return false;
         }
     }
 
@@ -167,3 +212,6 @@ public class HttpEvaluatorSender implements EvaluatorSender{
         return connection;
     }
 }
+
+
+

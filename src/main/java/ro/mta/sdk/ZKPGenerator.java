@@ -1,56 +1,44 @@
 package ro.mta.sdk;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.Map;
-import java.util.stream.Collectors;
+
+import java.io.*;
+import java.net.URL;
+import java.nio.file.*;
+import java.util.*;
 
 public class ZKPGenerator {
-    private static final String WASM_PATH = "zkp/age_check.wasm";
-    private static final String ZKEY_PATH = "zkp/age_check_0001.zkey";
-    private static final String GENERATE_SCRIPT = "zkp/generate_witness.js";
-    private static final String NODE_MODULES_PATH = "src/main/resources/zkp/node_modules";
+    private static final String ZKP_DIR = "zkp";
+    private static final String WASM_FILE = "age_check.wasm";
+    private static final String ZKEY_FILE = "age_check_0001.zkey";
+    private static final String GENERATE_SCRIPT = "generate_witness.js";
 
     public String generateProof(int age, int threshold) throws Exception {
-        Path tempDir = Files.createTempDirectory("zkp");
+        Path tempDir = extractZKPResourcesToTemp();
 
-        Path inputFile = tempDir.resolve("input.json");
-        Files.write(inputFile,
-                String.format("{\"age\":%d,\"threshold\":%d}", age, threshold).getBytes()
+        Path wasmPath = tempDir.resolve(WASM_FILE);
+        Path zkeyPath = tempDir.resolve(ZKEY_FILE);
+        Path scriptPath = tempDir.resolve(GENERATE_SCRIPT);
+        Path inputPath = tempDir.resolve("input.json");
+        Path outputDir = Files.createTempDirectory("zkp_output");
+
+        Files.writeString(inputPath,
+                String.format("{\"age\":%d,\"threshold\":%d}", age, threshold)
         );
 
         ProcessBuilder pb = new ProcessBuilder(
                 "node",
-                getResourcePath(GENERATE_SCRIPT),
-                getResourcePath(WASM_PATH),
-                inputFile.toString(),
-                tempDir.toString(),
-                getResourcePath(ZKEY_PATH)
+                scriptPath.toString(),
+                wasmPath.toString(),
+                inputPath.toString(),
+                outputDir.toString(),
+                zkeyPath.toString()
         );
 
-        executeProcess(pb);
 
-        String proof = Files.readString(tempDir.resolve("proof.json"));
-        String publicSignals = Files.readString(tempDir.resolve("public.json"));
-
-        return String.format("{\"proof\":%s,\"publicSignals\":%s}", proof, publicSignals);
-    }
-
-    private String getResourcePath(String resource) throws IOException {
-        InputStream in = getClass().getClassLoader().getResourceAsStream(resource);
-        Path tempFile = Files.createTempFile("zkp_", "_temp");
-        Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
-        return tempFile.toAbsolutePath().toString();
-    }
-
-    private void executeProcess(ProcessBuilder pb) throws IOException, InterruptedException {
         Map<String, String> env = pb.environment();
-        env.put("NODE_PATH", NODE_MODULES_PATH);
+        env.put("NODE_PATH", tempDir.resolve(ZKP_DIR).resolve("node_modules").toString());
+        System.out.println("NODE_PATH: " + env.get("NODE_PATH"));
+
         pb.redirectErrorStream(true);
         Process process = pb.start();
 
@@ -65,7 +53,51 @@ public class ZKPGenerator {
 
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            throw new RuntimeException("ZKP process failed with exit code: " + exitCode);
+            throw new RuntimeException("Procesul ZKP a eșuat cu codul: " + exitCode);
         }
+
+        String proof = Files.readString(outputDir.resolve("proof.json"));
+        String publicSignals = Files.readString(outputDir.resolve("public.json"));
+
+        return String.format("{\"proof\":%s,\"publicSignals\":%s}", proof, publicSignals);
+    }
+
+    private Path extractZKPResourcesToTemp() throws IOException {
+        Path tempDir = Files.createTempDirectory("zkp_resources");
+        ClassLoader loader = getClass().getClassLoader();
+
+        try (InputStream in = loader.getResourceAsStream(ZKP_DIR)) {
+            if (in == null) {
+                throw new IOException("Resursele ZKP nu au fost găsite în JAR!");
+            }
+        }
+
+        URL resourceUrl = loader.getResource(ZKP_DIR);
+        if (resourceUrl == null) {
+            throw new IOException("Resursele ZKP nu au fost găsite în JAR!");
+        }
+
+        try (FileSystem fileSystem = FileSystems.newFileSystem(resourceUrl.toURI(), Collections.emptyMap())) {
+            Path zkpPathInJar = fileSystem.getPath(ZKP_DIR);
+
+            Files.walk(zkpPathInJar)
+                    .forEach(source -> {
+                        try {
+                            Path dest = tempDir.resolve(ZKP_DIR).resolve(zkpPathInJar.relativize(source).toString());
+
+                            if (Files.isDirectory(source)) {
+                                Files.createDirectories(dest);
+                            } else {
+                                Files.copy(source, dest, StandardCopyOption.REPLACE_EXISTING);
+                            }
+                        } catch (Exception e) {
+                            throw new RuntimeException("Eroare la copierea resurselor!", e);
+                        }
+                    });
+        } catch (Exception e) {
+            throw new IOException("Eroare la copierea resurselor!", e);
+        }
+
+        return tempDir.resolve(ZKP_DIR);
     }
 }
