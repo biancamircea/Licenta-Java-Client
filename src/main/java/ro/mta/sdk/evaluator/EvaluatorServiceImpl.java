@@ -46,7 +46,7 @@ public class EvaluatorServiceImpl implements EvaluatorService {
         if(featureEvaluationResponse.getPayload() != null){
             payloadCache.put(payloadCacheKey, featureEvaluationResponse.getPayload());
         } else {
-            payloadCache.put(payloadCacheKey, "NO_PAYLOAD_DEFINED");
+            payloadCache.put(payloadCacheKey, "default");
         }
     }
 
@@ -54,6 +54,9 @@ public class EvaluatorServiceImpl implements EvaluatorService {
         ConstraintResponse response = evaluatorSender.fetchConstraints(toggleSystemConfig.getApiKey(), toggleName);
         if (response == null) {
             return null;
+        }
+        if(response.getConstraints() == null){
+            response.setConstraints(new ArrayList<>());
         }
 
         List<ZKPProof> zkProofs = new ArrayList<>();
@@ -102,6 +105,9 @@ public class EvaluatorServiceImpl implements EvaluatorService {
         }
 
         FeatureEvaluationRequest request = getFeatureEvaluationRequest(toggleName, systemContext);
+        if(request==null){
+            return false;
+        }
 
         List<ContextField> contextFields = request.getContextFields() != null
                 ? request.getContextFields()
@@ -110,6 +116,9 @@ public class EvaluatorServiceImpl implements EvaluatorService {
         FeatureEvaluationResponse evaluationResponse=evaluatorSender.sendZKPVerificationRequest(toggleName, toggleSystemConfig.getApiKey(),
                 contextFields, request.getZkpProofs());
 
+        if(evaluationResponse==null){
+            return false;
+        }
         if(evaluationResponse.getEnabled()!=null){
             cacheResponse(toggleName, systemContext, evaluationResponse);
             return evaluationResponse.getEnabled();
@@ -138,10 +147,18 @@ public class EvaluatorServiceImpl implements EvaluatorService {
         }
 
         FeatureEvaluationRequest featureEvaluationRequest = getFeatureEvaluationRequest(toggleName, systemContext);
+        if(featureEvaluationRequest==null){
+            return defaultPayload;
+        }
+
         List<ContextField> contextFields = featureEvaluationRequest.getContextFields() != null
                 ? featureEvaluationRequest.getContextFields()
                 : Collections.emptyList();
         FeatureEvaluationResponse evaluationResponse = evaluatorSender.sendZKPVerificationRequest(toggleName, toggleSystemConfig.getApiKey(), contextFields, featureEvaluationRequest.getZkpProofs());
+       if(evaluationResponse == null){
+            return defaultPayload;
+        }
+
         if (evaluationResponse.getEnabled() != null) {
             cacheResponse(toggleName, systemContext, evaluationResponse);
             if (evaluationResponse.getPayload() != null) {
