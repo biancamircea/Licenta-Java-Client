@@ -4,7 +4,6 @@ import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-//TODO AICI TREBUIE ADAUGATE DATELE PT SCHEDULE
 public class FeatureToggle {
     private final String name;
     private final boolean enabled;

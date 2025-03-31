@@ -1,8 +1,6 @@
 package ro.mta.sdk.evaluator;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +32,6 @@ public class HttpEvaluatorSender implements EvaluatorSender{
     private ToggleSystemConfig toggleSystemConfig;
     private final URL clientEvaluationURL;
     private final URL constraintsURL;
-    private final URL clientEvaluationZKP;
 
     public HttpEvaluatorSender(ToggleSystemConfig systemConfig){
         this.toggleSystemConfig = systemConfig;
@@ -42,18 +39,6 @@ public class HttpEvaluatorSender implements EvaluatorSender{
         this.clientEvaluationURL = urls.getEvaluateToggleURL();
         this.gson = new GsonBuilder().create();
         this.constraintsURL = urls.getConstraintsURL();
-        this.clientEvaluationZKP = urls.getEvaluateToggleZKPURL();
-    }
-
-
-
-    @Override
-    public FeatureEvaluationResponse evaluateToggle(FeatureEvaluationRequest featureEvaluationRequest) {
-        try {
-            return post(this.clientEvaluationURL, featureEvaluationRequest);
-        } catch (ToggleSystemException ex) {
-            return new FeatureEvaluationResponse(null, FeatureEvaluationResponse.Status.ERROR);
-        }
     }
 
     public ConstraintResponse fetchConstraints(String apiToken, String toggleName) throws ToggleSystemException {
@@ -81,7 +66,6 @@ public class HttpEvaluatorSender implements EvaluatorSender{
             }
         }
     }
-
 
     private FeatureEvaluationResponse post(URL url, Object o) throws ToggleSystemException {
         HttpURLConnection connection = null;
@@ -146,32 +130,47 @@ public class HttpEvaluatorSender implements EvaluatorSender{
     }
 
     @Override
-    public boolean sendZKPVerificationRequest(String toggleName, String apiToken, String proofJson) {
+    public FeatureEvaluationResponse sendZKPVerificationRequest(String toggleName, String apiToken,
+                                              List<ContextField> contextFields, List<ZKPProof> proofs) {
         HttpURLConnection connection = null;
         try {
-            connection = openConnection(this.clientEvaluationZKP);
+            connection = openConnection(this.clientEvaluationURL);
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Authorization", "Bearer " + apiToken);
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setRequestProperty("Accept", "application/json");
             connection.setDoOutput(true);
 
-            JsonObject proofObject = gson.fromJson(proofJson, JsonObject.class);
+            JsonArray contextArray = new JsonArray();
+            for (ContextField entry : contextFields) {
+                JsonObject contextObject = new JsonObject();
+                contextObject.addProperty("name", entry.getName());
+                contextObject.addProperty("value", entry.getValue());
+                contextArray.add(contextObject);
+            }
+
+            JsonArray proofsA = new JsonArray();
+            for (ZKPProof zkProof : proofs) {
+                JsonObject proofJson = new JsonObject();
+                proofJson.addProperty("name", zkProof.getName());
+                proofJson.add("proof", zkProof.getProof());
+                proofsA.add(proofJson);
+            }
 
             JsonObject requestBody = new JsonObject();
             requestBody.addProperty("toggleName", toggleName);
-            requestBody.add("proof", proofObject);
-
-            System.out.println("Request body: "+requestBody);
+            requestBody.add("contextFields", contextArray);
+            requestBody.add("proofs", proofsA);
 
             try (OutputStream os = connection.getOutputStream()) {
                 os.write(gson.toJson(requestBody).getBytes(StandardCharsets.UTF_8));
             }
 
             return processZKPResponse(connection);
+
         } catch (IOException e) {
             e.printStackTrace();
-            return false;
+            return null;
         } finally {
             if (connection != null) {
                 connection.disconnect();
@@ -179,19 +178,20 @@ public class HttpEvaluatorSender implements EvaluatorSender{
         }
     }
 
-    private boolean processZKPResponse(HttpURLConnection connection) throws IOException {
+
+    private FeatureEvaluationResponse processZKPResponse(HttpURLConnection connection) throws IOException {
         int responseCode = connection.getResponseCode();
         if (responseCode == HttpURLConnection.HTTP_OK) {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-                FeatureEvaluationResponse response = gson.fromJson(reader, FeatureEvaluationResponse.class);
-                return response.getEnabled();
+                return gson.fromJson(reader, FeatureEvaluationResponse.class);
+
             }catch (Exception e){
                 e.printStackTrace();
-                return false;
+                return null;
             }
         } else {
             System.err.println("Server returned response code: " + responseCode);
-            return false;
+            return null;
         }
     }
 

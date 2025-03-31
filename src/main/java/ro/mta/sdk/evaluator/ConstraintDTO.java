@@ -7,6 +7,7 @@ class ConstraintDTO {
     private String contextName;
     private String operator;
     private List<String> values;
+    private Long isConfidential;
 
     public String getContextName() {
         return contextName;
@@ -30,5 +31,13 @@ class ConstraintDTO {
 
     public void setValues(List<String> values) {
         this.values = values;
+    }
+
+    public Long getIsConfidential() {
+        return isConfidential;
+    }
+
+    public void setIsConfidential(Long isConfidential) {
+        this.isConfidential = isConfidential;
     }
 }

@@ -1,5 +1,8 @@
 package ro.mta.sdk;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.*;
 import java.net.URL;
@@ -8,11 +11,11 @@ import java.util.*;
 
 public class ZKPGenerator {
     private static final String ZKP_DIR = "zkp";
-    private static final String WASM_FILE = "age_check.wasm";
-    private static final String ZKEY_FILE = "age_check_0001.zkey";
+    private static final String WASM_FILE = "age_check_plonk.wasm";
+    private static final String ZKEY_FILE = "age_check_plonk.zkey";
     private static final String GENERATE_SCRIPT = "generate_witness.js";
 
-    public String generateProof(int age, int threshold) throws Exception {
+    public JsonObject generateProof(int age, int threshold, int operation) throws Exception {
         Path tempDir = extractZKPResourcesToTemp();
 
         Path wasmPath = tempDir.resolve(WASM_FILE);
@@ -22,7 +25,7 @@ public class ZKPGenerator {
         Path outputDir = Files.createTempDirectory("zkp_output");
 
         Files.writeString(inputPath,
-                String.format("{\"age\":%d,\"threshold\":%d}", age, threshold)
+                String.format("{\"val\":%d,\"threshold\":%d,\"operation\":%d}", age, threshold,operation)
         );
 
         ProcessBuilder pb = new ProcessBuilder(
@@ -59,7 +62,14 @@ public class ZKPGenerator {
         String proof = Files.readString(outputDir.resolve("proof.json"));
         String publicSignals = Files.readString(outputDir.resolve("public.json"));
 
-        return String.format("{\"proof\":%s,\"publicSignals\":%s}", proof, publicSignals);
+        JsonObject proofJson = JsonParser.parseString(proof).getAsJsonObject();
+        JsonArray publicSignalsJson = JsonParser.parseString(publicSignals).getAsJsonArray();
+
+        JsonObject proofContainer = new JsonObject();
+        proofContainer.add("proof", proofJson);
+        proofContainer.add("publicSignals", publicSignalsJson);
+
+        return proofContainer;
     }
 
     private Path extractZKPResourcesToTemp() throws IOException {

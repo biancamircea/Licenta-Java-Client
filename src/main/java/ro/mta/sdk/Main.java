@@ -2,20 +2,30 @@ package ro.mta.sdk;
 
 public class Main {
     public static void main(String[] args) {
+
         ToggleSystemConfig toggleSystemConfig = ToggleSystemConfig.builder()
-                .toggleServerAPI("http://localhost:8080")
-                .apiKey("Q4z23ZaK:Ml2JXk0j:nmVMBZ0e:0.F6BE9E47853417FA60E83E73B4B4416555CE65AD610B589402A4270E15D709D3")
+                .toggleServerAPI("https://localhost:8443")
+                .apiKey("Q4z23ZaK:Ml2JXk0j:YG5OqVxL:0.11874B303D0F7F9A451579BE23B60A0EFD7510D26D07B8897F1A9728A85B285C")
                 .appName("concedii")
-                .remoteEvaluation(true)
                 .build();
 
         ToggleSystemClient systemClient = new ToggleSystemClient(toggleSystemConfig);
 
         ToggleSystemContext context = ToggleSystemContext.builder()
-                .addProperty("age", "20")
+                .addContext("user_role", "25")
+                .addContext("conf","14")
+                .addContext("conf2","4")
                 .build();
 
-        boolean isEnabled = systemClient.isEnabledZKP("togge1",context);
+        boolean isEnabled = systemClient.isEnabled("background-color",context);
+        String payload = systemClient.getPayload("background-color",context);
         System.out.println(isEnabled);
+        System.out.println("payload:"+payload);
+
+        boolean isEnabled2 = systemClient.isEnabled("background-color",context);
+        System.out.println("isEn2: "+isEnabled2);
+
+        boolean isEnabled4 = systemClient.isEnabled("feature_test");
+        System.out.println("isEn4: "+isEnabled4);
     }
 }

@@ -3,20 +3,12 @@ package ro.mta.sdk.evaluator;
 import java.util.List;
 
 public class FeatureEvaluationRequest {
-    private String toggleName;
     private List<ContextField> contextFields;
+    private List<ZKPProof> zkpProofs;
 
-    public FeatureEvaluationRequest(String toggleName, List<ContextField> contextFields) {
-        this.toggleName = toggleName;
+    public FeatureEvaluationRequest( List<ContextField> contextFields, List<ZKPProof> zkpProofs) {
         this.contextFields = contextFields;
-    }
-
-    public String getToggleName() {
-        return toggleName;
-    }
-
-    public void setToggleName(String toggleName) {
-        this.toggleName = toggleName;
+        this.zkpProofs = zkpProofs;
     }
 
     public List<ContextField> getContextFields() {
@@ -25,5 +17,12 @@ public class FeatureEvaluationRequest {
 
     public void setContextFields(List<ContextField> contextFields) {
         this.contextFields = contextFields;
+    }
+
+    public List<ZKPProof> getZkpProofs() {
+        return zkpProofs;
+    }
+    public void setZkpProofs(List<ZKPProof> zkpProofs) {
+        this.zkpProofs = zkpProofs;
     }
 }

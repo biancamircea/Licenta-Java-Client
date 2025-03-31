@@ -35,7 +35,6 @@ public class ToggleSystemConfig {
             String appName,
             String environment,
             String instanceId,
-            boolean remoteEvaluation,
             boolean synchronousFetchOnInitialisation,
             int pollingInterval,
             long cacheTimeout,
@@ -62,7 +61,7 @@ public class ToggleSystemConfig {
         this.appName = appName;
         this.environment = environment;
         this.instanceId = instanceId;
-        this.remoteEvaluation = remoteEvaluation;
+        this.remoteEvaluation = true;
         this.synchronousFetchOnInitialisation = synchronousFetchOnInitialisation;
         this.pollingInterval = pollingInterval;
         this.cacheTimeout = cacheTimeout;
@@ -144,12 +143,11 @@ public class ToggleSystemConfig {
         private int pollingInterval = 60; // Default polling interval in seconds
         private @Nullable long cacheTimeout = 60;
         private @Nullable String backupFilePath; // Default backup file path
-        private boolean remoteEvaluation = false;
+        private boolean remoteEvaluation = true;
         private boolean synchronousFetchOnInitialisation = false;
         private ToggleSystemContextProvider toggleSystemContextProvider = ToggleSystemContextProvider.getDefaultProvider();
         private ToggleSystemExecutor toggleSystemExecutor;
 
-//        SETTER
         public Builder toggleServerAPI(URI toggleServerAPI) {
             this.toggleServerAPI = toggleServerAPI;
             return this;
@@ -169,10 +167,6 @@ public class ToggleSystemConfig {
             return this;
         }
 
-        public Builder remoteEvaluation(boolean remoteEvaluation) {
-            this.remoteEvaluation = remoteEvaluation;
-            return this;
-        }
         public Builder synchronousFetchOnInitialisation(boolean enable) {
             this.synchronousFetchOnInitialisation = enable;
             return this;
@@ -251,7 +245,6 @@ public class ToggleSystemConfig {
             }
         }
 
-//      BUILD METHOD
         public ToggleSystemConfig build() {
             return new ToggleSystemConfig(
                     toggleServerAPI,
@@ -259,7 +252,6 @@ public class ToggleSystemConfig {
                     appName,
                     environment,
                     instanceId,
-                    remoteEvaluation,
                     synchronousFetchOnInitialisation,
                     pollingInterval,
                     cacheTimeout,

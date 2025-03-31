@@ -16,6 +16,8 @@ public class ConstraintUtil {
     static {
         operators.put(Operator.IN, new BasicConstraintOperator());
         operators.put(Operator.NOT_IN, new BasicConstraintOperator());
+        operators.put(Operator.LESS_THAN, new BasicConstraintOperator());
+        operators.put(Operator.GREATER_THAN, new BasicConstraintOperator());
     }
 
     public static boolean validate(@Nullable List<Constraint> constraints, ToggleSystemContext context) {

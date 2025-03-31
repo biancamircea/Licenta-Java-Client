@@ -16,11 +16,6 @@ async function main() {
     const outputDir = args[2];
     const zkeyPath = args[3];
 
-    console.log("[DEBUG] wasmPath:", wasmPath);
-    console.log("[DEBUG] inputPath:", inputPath);
-    console.log("[DEBUG] outputDir:", outputDir);
-    console.log("[DEBUG] zkeyPath:", zkeyPath);
-
     try {
         if (!fs.existsSync(wasmPath)) throw new Error(`WASM file missing: ${wasmPath}`);
         if (!fs.existsSync(inputPath)) throw new Error(`Input file missing: ${inputPath}`);
@@ -38,7 +33,7 @@ async function main() {
         fs.writeFileSync(path.join(outputDir, "proof.json"), JSON.stringify(proof, null, 2));
         fs.writeFileSync(path.join(outputDir, "public.json"), JSON.stringify(publicSignals, null, 2));
 
-        console.log("[SUCCESS] Proof generat cu succes în:", outputDir);
+        console.log("[SUCCESS] Proof generat cu succes:");
         process.exit(0);
     } catch (error) {
         console.error("[ERROR]", error.message);
