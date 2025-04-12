@@ -67,65 +67,28 @@ public class HttpEvaluatorSender implements EvaluatorSender{
         }
     }
 
-    private FeatureEvaluationResponse post(URL url, Object o) throws ToggleSystemException {
-        HttpURLConnection connection = null;
+    private ConstraintResponse getConstraintsResponse(HttpURLConnection request) {
         try {
-            connection = openConnection(url);
+            int responseCode = request.getResponseCode();
+            if (responseCode < 300) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream(), StandardCharsets.UTF_8))) {
+                    List<ConstraintDTO> constraints = gson.fromJson(reader, new TypeToken<List<ConstraintDTO>>(){}.getType());
 
-            OutputStreamWriter wr = new OutputStreamWriter(connection.getOutputStream());
-            gson.toJson(o, wr);
-            wr.flush();
-            wr.close();
-            connection.connect();
-
-            return getEvaluateResponse(connection);
+                    ConstraintResponse response = new ConstraintResponse();
+                    response.setConstraints(constraints);
+                    return response;
+                }
+            } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+                LOG.warn("Constraints not found.");
+            } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                LOG.warn("Invalid API token.");
+            }
         } catch (IOException e) {
-            throw new ToggleSystemException("Could not post to Unleash API", e);
-        } catch (IllegalStateException e) {
-            throw new ToggleSystemException(e.getMessage(), e);
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
+            LOG.error("Error retrieving constraints: {}", e.getMessage(), e);
+        } catch (JsonSyntaxException e) {
+            LOG.error("Invalid JSON format in constraints response: {}", e.getMessage(), e);
         }
-    }
-    private FeatureEvaluationResponse getEvaluateResponse(HttpURLConnection request) throws IOException {
-        int responseCode = request.getResponseCode();
-        if (responseCode < 300) {
-            try (BufferedReader reader =
-                         new BufferedReader(
-                                 new InputStreamReader(
-                                         (InputStream) request.getContent(), StandardCharsets.UTF_8))) {
 
-//                TODO: get reponse
-                FeatureEvaluationResponse featureEvaluationResponse = gson.fromJson(reader, FeatureEvaluationResponse.class);
-                featureEvaluationResponse.setStatus(FeatureEvaluationResponse.Status.SUCCESS);
-                return featureEvaluationResponse;
-            }
-        } else if(responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-            LOG.warn("Feature toggle not found.");
-        }
-        else if(responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-            LOG.warn("Api Token not valid.");
-        }
-        return new FeatureEvaluationResponse(null, FeatureEvaluationResponse.Status.ERROR);
-    }
-
-    private ConstraintResponse getConstraintsResponse(HttpURLConnection request) throws IOException {
-        int responseCode = request.getResponseCode();
-        if (responseCode < 300) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(request.getInputStream(), StandardCharsets.UTF_8))) {
-                List<ConstraintDTO> constraints = gson.fromJson(reader, new TypeToken<List<ConstraintDTO>>(){}.getType());
-
-                ConstraintResponse response = new ConstraintResponse();
-                response.setConstraints(constraints);
-                return response;
-            }
-        } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-            LOG.warn("Constraints not found.");
-        } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-            LOG.warn("Invalid API token.");
-        }
         return new ConstraintResponse();
     }
 
@@ -154,6 +117,7 @@ public class HttpEvaluatorSender implements EvaluatorSender{
                 JsonObject proofJson = new JsonObject();
                 proofJson.addProperty("name", zkProof.getName());
                 proofJson.add("proof", zkProof.getProof());
+                proofJson.addProperty("type", zkProof.getType());
                 proofsA.add(proofJson);
             }
 
@@ -179,21 +143,27 @@ public class HttpEvaluatorSender implements EvaluatorSender{
     }
 
 
-    private FeatureEvaluationResponse processZKPResponse(HttpURLConnection connection) throws IOException {
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-                return gson.fromJson(reader, FeatureEvaluationResponse.class);
-
-            }catch (Exception e){
-                e.printStackTrace();
-                return null;
+    private FeatureEvaluationResponse processZKPResponse(HttpURLConnection connection) {
+        try {
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+                    return gson.fromJson(reader, FeatureEvaluationResponse.class);
+                }
+            } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+                LOG.warn("Toggle not found.");
+            } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                LOG.warn("Invalid API token.");
             }
-        } else {
-            System.err.println("Server returned response code: " + responseCode);
-            return null;
+        } catch (IOException e) {
+            LOG.error("Error retrieving ZKP response: {}", e.getMessage(), e);
+        } catch (JsonSyntaxException e) {
+            LOG.error("Invalid JSON format in ZKP response: {}", e.getMessage(), e);
         }
+
+        return new FeatureEvaluationResponse();
     }
+
 
     private HttpURLConnection openConnection(URL url) throws IOException {
         HttpURLConnection connection;

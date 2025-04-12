@@ -76,13 +76,31 @@ public class EvaluatorServiceImpl implements EvaluatorService {
 
                     JsonObject proofJson = zkpGenerator.generateProof(value, threshold, operation);
 
-                    zkProofs.add(new ZKPProof(contextKey, proofJson));
+                    zkProofs.add(new ZKPProof(contextKey, proofJson,"normal"));
 
 
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            } else if (contextValueOpt.isPresent()) {
+            } else if(constraint.getIsConfidential()==2 && systemContext.hasLocation()) {
+                try {
+                    Double lat = systemContext.getLocationY().orElse(0.0);
+                    Double lng = systemContext.getLocationX().orElse(0.0);
+                    Double lngAdmin = Double.parseDouble(constraint.getValues().get(2));//x
+                    Double latAdmin = Double.parseDouble(constraint.getValues().get(1));//y
+                    Integer marginCode = Integer.parseInt(constraint.getValues().get(0));
+
+                    ZKPGenerator zkpGenerator = new ZKPGenerator();
+
+                    JsonObject proofJson = zkpGenerator.generateProof(lng,lat, lngAdmin, latAdmin, marginCode);
+
+                    zkProofs.add(new ZKPProof(contextKey, proofJson, "location"));
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            else if (contextValueOpt.isPresent()) {
                 boolean exists = nonConfidentialContext.stream()
                         .anyMatch(cf -> cf.getName().equals(contextKey));
                 if (!exists) {
@@ -92,6 +110,9 @@ public class EvaluatorServiceImpl implements EvaluatorService {
             }
 
         }
+
+
+        //System.out.println("proofs:"+zkProofs.get(0).getName()+" "+zkProofs.get(0).getType());
 
         return new FeatureEvaluationRequest(nonConfidentialContext, zkProofs);
     }
@@ -136,7 +157,6 @@ public class EvaluatorServiceImpl implements EvaluatorService {
             default -> -1;
         };
     }
-
 
     @Override
     public String remotePayload(String toggleName, Boolean enabled, ToggleSystemContext systemContext, String defaultPayload) {

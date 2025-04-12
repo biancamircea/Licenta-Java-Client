@@ -8,6 +8,7 @@ class ConstraintDTO {
     private String operator;
     private List<String> values;
     private Long isConfidential;
+    private Long marginCode; //only for location
 
     public String getContextName() {
         return contextName;
@@ -39,5 +40,12 @@ class ConstraintDTO {
 
     public void setIsConfidential(Long isConfidential) {
         this.isConfidential = isConfidential;
+    }
+
+    public Long getMarginCode() {
+        return marginCode;
+    }
+    public void setMarginCode(Long marginCode) {
+        this.marginCode = marginCode;
     }
 }

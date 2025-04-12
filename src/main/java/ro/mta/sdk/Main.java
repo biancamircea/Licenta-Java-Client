@@ -12,9 +12,9 @@ public class Main {
         ToggleSystemClient systemClient = new ToggleSystemClient(toggleSystemConfig);
 
         ToggleSystemContext context = ToggleSystemContext.builder()
-                .addContext("user_role", "25")
+                .addContext("user_role","25")
                 .addContext("conf","14")
-                .addContext("conf2","4")
+                .addLocation(26.1070,44.4290)
                 .build();
 
         boolean isEnabled = systemClient.isEnabled("background-color",context);
@@ -22,10 +22,10 @@ public class Main {
         System.out.println(isEnabled);
         System.out.println("payload:"+payload);
 
-        boolean isEnabled2 = systemClient.isEnabled("background-color",context);
-        System.out.println("isEn2: "+isEnabled2);
-
-        boolean isEnabled4 = systemClient.isEnabled("feature_test");
-        System.out.println("isEn4: "+isEnabled4);
+//        boolean isEnabled2 = systemClient.isEnabled("background-color",context);
+//        System.out.println("isEn2: "+isEnabled2);
+//
+//        boolean isEnabled4 = systemClient.isEnabled("feature_test");
+//        System.out.println("isEn4: "+isEnabled4);
     }
 }

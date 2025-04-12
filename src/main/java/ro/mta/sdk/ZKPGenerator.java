@@ -11,15 +11,51 @@ import java.util.*;
 
 public class ZKPGenerator {
     private static final String ZKP_DIR = "zkp";
-    private static final String WASM_FILE = "age_check_plonk.wasm";
-    private static final String ZKEY_FILE = "age_check_plonk.zkey";
+    private static final String WASM_FILE_NORMAL = "age_check_plonk.wasm";
+    private static final String ZKEY_FILE_NORMAL = "age_check_plonk.zkey";
+    private static final String WASM_FILE_LOCATION = "circuit_location.wasm";
+    private static final String ZKEY_FILE_LOCATION = "circuit_location.zkey";
     private static final String GENERATE_SCRIPT = "generate_witness.js";
+
+    public JsonObject generateProof(double loc_x_user, double loc_y_user, double loc_x,double loc_y, int marginCode ) throws Exception {
+        Path tempDir = extractZKPResourcesToTemp();
+
+        Path wasmPath = tempDir.resolve(WASM_FILE_LOCATION);
+        Path zkeyPath = tempDir.resolve(ZKEY_FILE_LOCATION);
+        Path scriptPath = tempDir.resolve(GENERATE_SCRIPT);
+        Path inputPath = tempDir.resolve("input.json");
+        Path outputDir = Files.createTempDirectory("zkp_output");
+
+        int latInt = (int) Math.round(loc_y_user * 10000);
+        int lngInt = (int) Math.round(loc_x_user * 10000);
+        int latAdmin = (int) Math.round(loc_y * 10000);
+        int lngAdmin = (int) Math.round(loc_x * 10000);
+        long margin;
+
+        if (marginCode == 0) {
+            margin = 1200;
+        } else if (marginCode == 1) {
+            margin = 25000;
+        } else {
+            margin = 225000;
+        }
+
+        String jsonInput = String.format(
+                "{\"lat\":%d, \"lng\":%d, \"latAdmin\":%d, \"lngAdmin\":%d, \"margin\":%d}",
+                latInt, lngInt, latAdmin, lngAdmin, margin
+        );
+
+        Files.writeString(inputPath, jsonInput);
+
+        return runScript(tempDir,scriptPath, wasmPath, inputPath, outputDir, zkeyPath);
+
+    }
 
     public JsonObject generateProof(int age, int threshold, int operation) throws Exception {
         Path tempDir = extractZKPResourcesToTemp();
 
-        Path wasmPath = tempDir.resolve(WASM_FILE);
-        Path zkeyPath = tempDir.resolve(ZKEY_FILE);
+        Path wasmPath = tempDir.resolve(WASM_FILE_NORMAL);
+        Path zkeyPath = tempDir.resolve(ZKEY_FILE_NORMAL);
         Path scriptPath = tempDir.resolve(GENERATE_SCRIPT);
         Path inputPath = tempDir.resolve("input.json");
         Path outputDir = Files.createTempDirectory("zkp_output");
@@ -28,6 +64,10 @@ public class ZKPGenerator {
                 String.format("{\"val\":%d,\"threshold\":%d,\"operation\":%d}", age, threshold,operation)
         );
 
+        return runScript(tempDir,scriptPath, wasmPath, inputPath, outputDir, zkeyPath);
+    }
+
+    public JsonObject runScript(Path tempDir,Path scriptPath, Path wasmPath, Path inputPath, Path outputDir, Path zkeyPath) throws Exception {
         ProcessBuilder pb = new ProcessBuilder(
                 "node",
                 scriptPath.toString(),

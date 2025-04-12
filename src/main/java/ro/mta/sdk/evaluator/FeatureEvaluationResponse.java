@@ -19,6 +19,8 @@ public class FeatureEvaluationResponse {
         this.status = status;
     }
 
+    public FeatureEvaluationResponse() {}
+
     @Nullable
     public Boolean getEnabled() {
         return enabled;
