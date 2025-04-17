@@ -7,7 +7,8 @@ import com.google.gson.JsonParser;
 import java.io.*;
 import java.net.URL;
 import java.nio.file.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
 
 public class ZKPGenerator {
     private static final String ZKP_DIR = "zkp";
@@ -16,8 +17,12 @@ public class ZKPGenerator {
     private static final String WASM_FILE_LOCATION = "circuit_location.wasm";
     private static final String ZKEY_FILE_LOCATION = "circuit_location.zkey";
     private static final String GENERATE_SCRIPT = "generate_witness.js";
+    private static final String ZKP_TOOLS_DIR = ".zkp-tools"; // Director permanent pe client
 
-    public JsonObject generateProof(double loc_x_user, double loc_y_user, double loc_x,double loc_y, int marginCode ) throws Exception {
+    public JsonObject generateProof(double loc_x_user, double loc_y_user, double loc_x, double loc_y, int marginCode) throws Exception {
+        Path clientDir = getClientDir();
+        ensureSnarkjsAvailable(clientDir);
+
         Path tempDir = extractZKPResourcesToTemp();
 
         Path wasmPath = tempDir.resolve(WASM_FILE_LOCATION);
@@ -26,18 +31,19 @@ public class ZKPGenerator {
         Path inputPath = tempDir.resolve("input.json");
         Path outputDir = Files.createTempDirectory("zkp_output");
 
-        int latInt = (int) Math.round(loc_y_user * 10000);
-        int lngInt = (int) Math.round(loc_x_user * 10000);
-        int latAdmin = (int) Math.round(loc_y * 10000);
-        int lngAdmin = (int) Math.round(loc_x * 10000);
+        int latInt = (int) Math.round((loc_y_user + 90) * 1000);
+        int lngInt = (int) Math.round((loc_x_user + 180) * 1000);
+        int latAdmin = (int) Math.round((loc_y + 90) * 1000);
+        int lngAdmin = (int) Math.round((loc_x + 180) * 1000);
+
         long margin;
 
         if (marginCode == 0) {
-            margin = 1200;
+            margin = 100;
         } else if (marginCode == 1) {
-            margin = 25000;
+            margin = 2500;
         } else {
-            margin = 225000;
+            margin = 22500;
         }
 
         String jsonInput = String.format(
@@ -47,11 +53,13 @@ public class ZKPGenerator {
 
         Files.writeString(inputPath, jsonInput);
 
-        return runScript(tempDir,scriptPath, wasmPath, inputPath, outputDir, zkeyPath);
-
+        return runScript(clientDir, scriptPath, wasmPath, inputPath, outputDir, zkeyPath);
     }
 
     public JsonObject generateProof(int age, int threshold, int operation) throws Exception {
+        Path clientDir = getClientDir();
+        ensureSnarkjsAvailable(clientDir);
+
         Path tempDir = extractZKPResourcesToTemp();
 
         Path wasmPath = tempDir.resolve(WASM_FILE_NORMAL);
@@ -61,13 +69,15 @@ public class ZKPGenerator {
         Path outputDir = Files.createTempDirectory("zkp_output");
 
         Files.writeString(inputPath,
-                String.format("{\"val\":%d,\"threshold\":%d,\"operation\":%d}", age, threshold,operation)
+                String.format("{\"val\":%d,\"threshold\":%d,\"operation\":%d}", age, threshold, operation)
         );
 
-        return runScript(tempDir,scriptPath, wasmPath, inputPath, outputDir, zkeyPath);
+        return runScript(clientDir, scriptPath, wasmPath, inputPath, outputDir, zkeyPath);
     }
 
-    public JsonObject runScript(Path tempDir,Path scriptPath, Path wasmPath, Path inputPath, Path outputDir, Path zkeyPath) throws Exception {
+    public JsonObject runScript(Path clientDir, Path scriptPath, Path wasmPath, Path inputPath, Path outputDir, Path zkeyPath) throws Exception {
+        Path nodeModulesDir = clientDir.resolve(ZKP_TOOLS_DIR).resolve("node_modules");
+
         ProcessBuilder pb = new ProcessBuilder(
                 "node",
                 scriptPath.toString(),
@@ -77,12 +87,13 @@ public class ZKPGenerator {
                 zkeyPath.toString()
         );
 
-
         Map<String, String> env = pb.environment();
-        env.put("NODE_PATH", tempDir.resolve(ZKP_DIR).resolve("node_modules").toString());
+        env.put("NODE_PATH", nodeModulesDir.toString());
         System.out.println("NODE_PATH: " + env.get("NODE_PATH"));
 
         pb.redirectErrorStream(true);
+        pb.directory(clientDir.resolve(ZKP_TOOLS_DIR).toFile());
+
         Process process = pb.start();
 
         try (BufferedReader reader = new BufferedReader(
@@ -132,6 +143,10 @@ public class ZKPGenerator {
 
             Files.walk(zkpPathInJar)
                     .forEach(source -> {
+                        if (source.toString().contains("node_modules")) {
+                            return;
+                        }
+
                         try {
                             Path dest = tempDir.resolve(ZKP_DIR).resolve(zkpPathInJar.relativize(source).toString());
 
@@ -150,4 +165,49 @@ public class ZKPGenerator {
 
         return tempDir.resolve(ZKP_DIR);
     }
+
+
+    private void ensureSnarkjsAvailable(Path clientDir) throws IOException {
+
+        Path toolsDir = clientDir.resolve(ZKP_TOOLS_DIR);
+        if (!Files.exists(toolsDir)) {
+            Files.createDirectories(toolsDir);
+        }
+
+        Path nodeModulesDir = clientDir.resolve(ZKP_TOOLS_DIR).resolve("node_modules");
+
+        if (!Files.exists(nodeModulesDir) || !Files.exists(nodeModulesDir.resolve("snarkjs"))) {
+            System.out.println("snarkjs nu este instalat. Încercăm să-l instalăm...");
+
+            ProcessBuilder processBuilder = new ProcessBuilder("npm", "install", "snarkjs");
+            processBuilder.directory(toolsDir.toFile());
+            processBuilder.redirectErrorStream(true);
+            Process process = processBuilder.start();
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println("[npm install] " + line);
+                }
+            }
+
+            int exitCode = -1;
+            try {
+                exitCode = process.waitFor();
+            } catch (InterruptedException e) {
+                System.err.println("Procesul a fost întrerupt: " + e.getMessage());
+                Thread.currentThread().interrupt();
+            }
+            if (exitCode != 0) {
+                throw new IOException("Instalarea snarkjs a eșuat cu codul: " + exitCode);
+            }
+        } else {
+            System.out.println("snarkjs este deja disponibil.");
+        }
+    }
+
+    private Path getClientDir() {
+        return Paths.get(System.getProperty("user.home"));
+    }
+
 }

@@ -5,20 +5,18 @@ public class Main {
 
         ToggleSystemConfig toggleSystemConfig = ToggleSystemConfig.builder()
                 .toggleServerAPI("https://localhost:8443")
-                .apiKey("Q4z23ZaK:Ml2JXk0j:YG5OqVxL:0.11874B303D0F7F9A451579BE23B60A0EFD7510D26D07B8897F1A9728A85B285C")
+                .apiKey("Q4z23ZaK:Ml2JXk0j:YG5OqVxL:1.E78F856F45392D1B5995B5110E7549945F6BD273046FBC679C38F7C6AB35FC1F")
                 .appName("concedii")
                 .build();
 
         ToggleSystemClient systemClient = new ToggleSystemClient(toggleSystemConfig);
 
         ToggleSystemContext context = ToggleSystemContext.builder()
-                .addContext("user_role","25")
-                .addContext("conf","14")
-                .addLocation(26.1070,44.4290)
+                .addLocation(178,-89)
                 .build();
 
-        boolean isEnabled = systemClient.isEnabled("background-color",context);
-        String payload = systemClient.getPayload("background-color",context);
+        boolean isEnabled = systemClient.isEnabled("feature_back",context);
+        String payload = systemClient.getPayload("feature_back",context);
         System.out.println(isEnabled);
         System.out.println("payload:"+payload);
 

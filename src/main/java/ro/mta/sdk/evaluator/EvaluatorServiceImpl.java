@@ -65,6 +65,8 @@ public class EvaluatorServiceImpl implements EvaluatorService {
         for (ConstraintDTO constraint : response.getConstraints()) {
             String contextKey = constraint.getContextName();
             Optional<String> contextValueOpt = systemContext.getPropertyByName(contextKey);
+            String proofName = contextKey + constraint.getConstrGroupId();
+
 
             if (constraint.getIsConfidential()==1 && contextValueOpt.isPresent()) {
                 try {
@@ -76,7 +78,7 @@ public class EvaluatorServiceImpl implements EvaluatorService {
 
                     JsonObject proofJson = zkpGenerator.generateProof(value, threshold, operation);
 
-                    zkProofs.add(new ZKPProof(contextKey, proofJson,"normal"));
+                    zkProofs.add(new ZKPProof(proofName, proofJson, "normal"));
 
 
                 } catch (Exception e) {
@@ -94,7 +96,7 @@ public class EvaluatorServiceImpl implements EvaluatorService {
 
                     JsonObject proofJson = zkpGenerator.generateProof(lng,lat, lngAdmin, latAdmin, marginCode);
 
-                    zkProofs.add(new ZKPProof(contextKey, proofJson, "location"));
+                    zkProofs.add(new ZKPProof(proofName, proofJson, "location"));
 
                 } catch (Exception e) {
                     e.printStackTrace();
