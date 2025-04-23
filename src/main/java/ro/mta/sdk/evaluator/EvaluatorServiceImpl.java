@@ -113,9 +113,6 @@ public class EvaluatorServiceImpl implements EvaluatorService {
 
         }
 
-
-        //System.out.println("proofs:"+zkProofs.get(0).getName()+" "+zkProofs.get(0).getType());
-
         return new FeatureEvaluationRequest(nonConfidentialContext, zkProofs);
     }
 

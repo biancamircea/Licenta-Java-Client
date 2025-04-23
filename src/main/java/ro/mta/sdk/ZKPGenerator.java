@@ -89,21 +89,20 @@ public class ZKPGenerator {
 
         Map<String, String> env = pb.environment();
         env.put("NODE_PATH", nodeModulesDir.toString());
-        System.out.println("NODE_PATH: " + env.get("NODE_PATH"));
 
         pb.redirectErrorStream(true);
         pb.directory(clientDir.resolve(ZKP_TOOLS_DIR).toFile());
 
         Process process = pb.start();
 
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream()))) {
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println("[ZKP] " + line);
-            }
-        }
+//        try (BufferedReader reader = new BufferedReader(
+//                new InputStreamReader(process.getInputStream()))) {
+//
+//            String line;
+//            while ((line = reader.readLine()) != null) {
+//                System.out.println("[ZKP] " + line);
+//            }
+//        }
 
         int exitCode = process.waitFor();
         if (exitCode != 0) {
@@ -177,19 +176,19 @@ public class ZKPGenerator {
         Path nodeModulesDir = clientDir.resolve(ZKP_TOOLS_DIR).resolve("node_modules");
 
         if (!Files.exists(nodeModulesDir) || !Files.exists(nodeModulesDir.resolve("snarkjs"))) {
-            System.out.println("snarkjs nu este instalat. Încercăm să-l instalăm...");
+            //System.out.println("snarkjs nu este instalat. Încercăm să-l instalăm...");
 
             ProcessBuilder processBuilder = new ProcessBuilder("npm", "install", "snarkjs");
             processBuilder.directory(toolsDir.toFile());
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    System.out.println("[npm install] " + line);
-                }
-            }
+//            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+//                String line;
+//                while ((line = reader.readLine()) != null) {
+//                    System.out.println("[npm install] " + line);
+//                }
+//            }
 
             int exitCode = -1;
             try {
@@ -201,8 +200,6 @@ public class ZKPGenerator {
             if (exitCode != 0) {
                 throw new IOException("Instalarea snarkjs a eșuat cu codul: " + exitCode);
             }
-        } else {
-            System.out.println("snarkjs este deja disponibil.");
         }
     }
 

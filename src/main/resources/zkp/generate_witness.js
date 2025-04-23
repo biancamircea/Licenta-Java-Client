@@ -3,7 +3,6 @@ const snarkjs = require("snarkjs");
 const path = require("path");
 
 async function main() {
-    console.log("[DEBUG] process.argv:", process.argv.slice(2));
 
     const args = process.argv.slice(2);
     if (args.length !== 4) {
@@ -23,7 +22,6 @@ async function main() {
 
         const input = JSON.parse(fs.readFileSync(inputPath, "utf8"));
 
-        console.log("[INFO] Generating proof...");
         const { proof, publicSignals } = await snarkjs.plonk.fullProve(input, wasmPath, zkeyPath);
 
         if (!fs.existsSync(outputDir)) {
@@ -33,7 +31,6 @@ async function main() {
         fs.writeFileSync(path.join(outputDir, "proof.json"), JSON.stringify(proof, null, 2));
         fs.writeFileSync(path.join(outputDir, "public.json"), JSON.stringify(publicSignals, null, 2));
 
-        console.log("[SUCCESS] Proof generat cu succes:");
         process.exit(0);
     } catch (error) {
         console.error("[ERROR]", error.message);
