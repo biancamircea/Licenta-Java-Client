@@ -50,6 +50,16 @@ public class EvaluatorServiceImpl implements EvaluatorService {
         }
     }
 
+    private boolean isInteger(String s) {
+        try {
+            Integer.parseInt(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+
     private FeatureEvaluationRequest getFeatureEvaluationRequest(String toggleName, ToggleSystemContext systemContext){
         ConstraintResponse response = evaluatorSender.fetchConstraints(toggleSystemConfig.getApiKey(), toggleName);
         if (response == null) {
@@ -68,29 +78,37 @@ public class EvaluatorServiceImpl implements EvaluatorService {
             String proofName = contextKey + constraint.getConstrGroupId();
 
 
-            if (constraint.getIsConfidential()==1 && contextValueOpt.isPresent()) {
+            if (constraint.getIsConfidential() == 1 && contextValueOpt.isPresent()) {
+                String valueStr = contextValueOpt.get();
+                String thresholdStr = constraint.getValues().get(0);
+
+                if (!isInteger(valueStr) || !isInteger(thresholdStr)) {
+                    continue;
+                }
+
+                Integer value = Integer.parseInt(valueStr);
+                Integer threshold = Integer.parseInt(thresholdStr);
+                Integer operation = getOperationCode(constraint.getOperator());
+
                 try {
-                    Integer value = Integer.parseInt(contextValueOpt.get());
-                    Integer threshold = Integer.parseInt(constraint.getValues().get(0));
-                    Integer operation = getOperationCode(constraint.getOperator());
-
                     ZKPGenerator zkpGenerator = new ZKPGenerator();
-
                     JsonObject proofJson = zkpGenerator.generateProof(value, threshold, operation);
-
                     zkProofs.add(new ZKPProof(proofName, proofJson, "normal"));
-
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            } else if(constraint.getIsConfidential()==2 && systemContext.hasLocation()) {
+            }
+            else if(constraint.getIsConfidential()==2 && systemContext.hasLocation()) {
                 try {
                     Double lat = systemContext.getLocationY().orElse(0.0);
                     Double lng = systemContext.getLocationX().orElse(0.0);
-                    Double lngAdmin = Double.parseDouble(constraint.getValues().get(2));//x
-                    Double latAdmin = Double.parseDouble(constraint.getValues().get(1));//y
-                    Integer marginCode = Integer.parseInt(constraint.getValues().get(0));
+
+                    String rawConstraint = constraint.getValues().get(0); // "22:11:2"
+                    String[] parts = rawConstraint.split(":");
+
+                    Double lngAdmin = Double.parseDouble(parts[0]); // 22
+                    Double latAdmin = Double.parseDouble(parts[1]); // 11
+                    Integer marginCode = Integer.parseInt(parts[2]);
 
                     ZKPGenerator zkpGenerator = new ZKPGenerator();
 

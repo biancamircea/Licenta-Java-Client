@@ -95,15 +95,6 @@ public class ZKPGenerator {
 
         Process process = pb.start();
 
-//        try (BufferedReader reader = new BufferedReader(
-//                new InputStreamReader(process.getInputStream()))) {
-//
-//            String line;
-//            while ((line = reader.readLine()) != null) {
-//                System.out.println("[ZKP] " + line);
-//            }
-//        }
-
         int exitCode = process.waitFor();
         if (exitCode != 0) {
             throw new RuntimeException("Procesul ZKP a eșuat cu codul: " + exitCode);
@@ -176,19 +167,12 @@ public class ZKPGenerator {
         Path nodeModulesDir = clientDir.resolve(ZKP_TOOLS_DIR).resolve("node_modules");
 
         if (!Files.exists(nodeModulesDir) || !Files.exists(nodeModulesDir.resolve("snarkjs"))) {
-            //System.out.println("snarkjs nu este instalat. Încercăm să-l instalăm...");
 
             ProcessBuilder processBuilder = new ProcessBuilder("npm", "install", "snarkjs");
             processBuilder.directory(toolsDir.toFile());
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
 
-//            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-//                String line;
-//                while ((line = reader.readLine()) != null) {
-//                    System.out.println("[npm install] " + line);
-//                }
-//            }
 
             int exitCode = -1;
             try {

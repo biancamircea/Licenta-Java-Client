@@ -6,7 +6,7 @@
 
     <groupId>ro.mta.sdk</groupId>
     <artifactId>toggle-system</artifactId>
-    <version>1.1.13</version>
+    <version>1.2.0</version>
     <packaging>jar</packaging>
 
     <properties>

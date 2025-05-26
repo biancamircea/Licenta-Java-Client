@@ -4,26 +4,25 @@ public class Main {
     public static void main(String[] args) {
 
         ToggleSystemConfig toggleSystemConfig = ToggleSystemConfig.builder()
-                .toggleServerAPI("https://localhost:8443")
-                .apiKey("Q4z23ZaK:Ml2JXk0j:YG5OqVxL:1.E78F856F45392D1B5995B5110E7549945F6BD273046FBC679C38F7C6AB35FC1F")
+                .toggleServerAPI("https://api.zkflag.ro")
+                .apiKey("Q4z23ZaK:Ml2JXk0j:nmVMBZ0e:1.BD704B9C627DAC66BB4617874335B5E22E419EF3695FEBA0E9BE79DF4D023FF7")
                 .appName("concedii")
                 .build();
 
         ToggleSystemClient systemClient = new ToggleSystemClient(toggleSystemConfig);
 
         ToggleSystemContext context = ToggleSystemContext.builder()
-                .addLocation(178,-89)
+                .addContext("background", "14")
+                .addLocation( 44.0, 33.0)
                 .build();
 
-        boolean isEnabled = systemClient.isEnabled("feature_back",context);
-        String payload = systemClient.getPayload("feature_back",context);
-        System.out.println(isEnabled);
-        System.out.println("payload:"+payload);
 
-//        boolean isEnabled2 = systemClient.isEnabled("background-color",context);
-//        System.out.println("isEn2: "+isEnabled2);
-//
-//        boolean isEnabled4 = systemClient.isEnabled("feature_test");
-//        System.out.println("isEn4: "+isEnabled4);
+        boolean isEnabled = systemClient.isEnabled("flag_age",context);
+
+        String payload = systemClient.getPayload("flag_age",context);
+        System.out.println(payload);
+
+
+        System.out.println(isEnabled);
     }
 }
